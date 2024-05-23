@@ -1,3 +1,8 @@
+/**
+ * Student 1: William Malone ID: 1604564 
+ * Student 2: Justin Poutoa ID: 1620107
+ */
+
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 
