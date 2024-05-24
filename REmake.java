@@ -3,9 +3,6 @@
  * Student 2: Justin Poutoa ID: 1620107
  */
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-
 /**
  * This program takes a regular expression (regex) as input and outputs the corresponding FSM.
  */
@@ -43,9 +40,39 @@ public class REmake{
         String FSM = args[1];
 
         //Check if regexp input format is valid
-
+        compile(regexpInput);
     }
 
     //Need to set values/meanings of symbols
-    
+    public static void compile(String regexpString){
+        //This is where the regexp input is checked for illegal characters
+        if(regexpString.contains(".")){
+            //Wildcard that matches any literal
+        }
+
+        if(regexpString.contains("*")){
+            //Indicates closure (zero or more occurences) on the preceding regexp
+        }
+
+        if(regexpString.contains("?")){
+            //Indicates that the preceding regexp can occur zero or one time
+        }
+
+        if(regexpString.contains("|")){
+            //is an infix alternation operator such that if r and e are regexps, then r|e is a regexp that matches one of either r or e
+        }
+
+        //Didn't do:
+        //1. any symbol that does not have a special meaning (as given below) is a literal that matches itself
+        //3. adjacent regexps are concatenated to form a single regexp
+        //7. ( and ) may enclose a regexp to raise its precedence in the usual manner; such that if e is a regexp, then (e) is a regexp and is equivalent to e. e cannot be empty.
+        //8. \ is an escape character that matches nothing but indicates the symbol immediately following the backslash loses any special meaning and is to be interpretted as a literal symbol
+        //9. operator precedence is as follows (from high to low):
+        //      escaped characters (i.e. symbols preceded by \)
+        //      parentheses (i.e. the most deeply nested regexps have the highest precedence)
+        //      repetition/option operators (i.e. * and ?)
+        //      concatenation
+        //      alternation (i.e. | )
+        //10. not required for this assignment, but a challenge to those who are interested, is how you might incorporate ! as a "do not match" operator, such that !e matches only a pattern that does not match the expression e.
+    }
 }
