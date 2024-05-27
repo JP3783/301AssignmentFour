@@ -3,32 +3,52 @@
  * Student 2: Justin Poutoa ID: 1620107
  */
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * This program takes a regular expression (regex) as input and outputs the corresponding FSM.
  */
 public class REmake{
 
-    //Define state arrays
-    protected static char[] ch;
-    protected static int[] next1;
-    protected static int[] next2;
-    //Declare the start state
-    protected static int startState = 0;
+    private static List<State> states;
+    private static int currentState;
+
+
+
 
     /**
-     * This method contains the functions for parsing different components of the regex ('E', 'T', 'F')
-     * @param state represents the state during the process of pattern matching
-     * @param c character accepted by each state
-     * @param next1 next state to transition to
-     * @param next2 alternative state for branching
+     * This is a class to initialise the variables for the state of the FSM
      */
-    public static void setState(int state, char c, int next1, int next2){
-        ch[state] = c;
-        REmake.next1[state] = next1;
-        REmake.next2[state] = next2;
+    static class State{
+        int stateNumber;
+        String type;
+        int nextState1;
+        int nextState2;
+
+        /**
+         * The constructor to initialise the variables
+         */
+        State(int StateNumber, String Type, int NextState1, int NextState2){
+            this.stateNumber = StateNumber;
+            this.type = Type;
+            this.nextState1 = NextState1;
+            this.nextState2 = NextState2;
+        }
+
+        /**
+         * To return the correct format of the FSM
+         */
+        @Override
+        public String toString(){
+            return stateNumber + "," + type + "," + nextState1 + "," + nextState2;
+        }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         //Make sure the program is run correctly in the terminal
         if(args.length != 2){
             System.err.println("Usage: java REmake <regexp> <output_file_path>");
@@ -38,12 +58,35 @@ public class REmake{
         //Declare variables for inputFile and outputFile
         String regexpInput = args[0];
         String FSM = args[1];
+        
+        //Initialise the states list
+        states = new ArrayList<>();
+        currentState = 1;
 
-        //Check if regexp input format is valid
+        //Initialise state that branches to the start of the actual FSM
+        states.add(new State(0, "BR", 1, 1));
+
+        //Compile the regexp into FSM
         compile(regexpInput);
+
+        //Output the FSM
+        writeToFile(FSM);
     }
 
-    //Need to set values/meanings of symbols
+    /**
+     * This method writes the FSM to a file
+     * @param fSM the FSM output from the regexp
+     * @throws IOException 
+     */
+    private static void writeToFile(String fileName) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
+            for(State state : states){
+                writer.write(state.toString());
+                writer.newLine();
+            }
+        }
+    }
+
     public static void compile(String regexpString){
         //This is where the regexp input is checked for illegal characters
         if(regexpString.contains(".")){
