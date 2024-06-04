@@ -53,66 +53,76 @@ public class REmake{
         }
 
         //Declare variables for inputFile and outputFile
-        //String regexpInput = args[0];
+        String regexpInput = args[0];
         String FSM = args[1];
         
         //Initialise the states list
         states = new ArrayList<>();
         currentState = 1;
 
-        ArrayList<ArrayList<String>> table = new ArrayList<>();
-        createTable(table);
-
         //Initialise state that branches to the start of the actual FSM
         states.add(new State(0, "BR", 1, 1));
 
+        //Build FSM from regexp input
+        buildFSM(regexpInput);
+
         //Output the FSM
-        writeToFile(table, FSM);
+        writeToFile(FSM);
     }
 
-    /**
-     * This creates the heading of the table, where you'll find "s,ch,1,2"
-     * @param table the structure for the FSM outputs
-     * @return the table with an informative first row
-     */
-    private static ArrayList<ArrayList<String>> createTable(ArrayList<ArrayList<String>> table){
-        //Declare variables
-        ArrayList<String> patternRow = new ArrayList<>();
-        ArrayList<String> line = new ArrayList<>();
-        //Populate table
-        patternRow.add("s");
-        patternRow.add("ch");
-        patternRow.add("1");
-        patternRow.add("2");
-        line.add("___________");
-        table.add(patternRow);
-        table.add(line);
-        //Return the output
-        return table;
+    private static void buildFSM(String regexp){
+        int startState;
+        int prevState = 1;
+
+        for(int i = 0; i < regexp.length(); i++){
+            char c = regexp.charAt(i);
+
+            if(c == '*'){
+                states.get(prevState - 1).nextState1 = currentState;
+                states.add(new State(currentState++, "BR", prevState, currentState + 1));
+                prevState = currentState++;
+            } else if(c == '?'){
+                states.get(prevState - 1).nextState2 = currentState;
+                states.add(new State(currentState++, "BR", prevState, currentState + 1));
+                prevState = currentState++;
+            } else if (c == '|') {
+                startState = states.size();
+                states.add(new State(currentState++, "BR", prevState, -1));
+                prevState = currentState++;
+            } else if (c == '(') {
+                startState = currentState;
+            } else if (c == ')') {
+                // Find the corresponding startState for '('
+                // This part is simplified for the sake of example
+                startState = prevState - 1;
+                states.get(startState).nextState2 = prevState;
+            } else {
+                states.add(new State(currentState++, "\"" + c + "\"", currentState, currentState));
+                prevState = currentState++;
+            }
+        }
     }
 
     /**
      * This method writes the FSM to a file
-     * @param table the structure for the FSM output
-     * @param fSM the FSM output from the regexp
+     * 
+     * @param fileName the FSM output from the regexp
      */
-    private static void writeToFile(ArrayList<ArrayList<String>> table, String fileName) {
-        try(BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))){
-            for(ArrayList<String> row : table){
-                for (int i = 0; i < row.size(); i++) {
-                    writer.write(row.get(i));
-                    if (i < row.size() - 1) {
-                        writer.write(", ");
-                    }
-                }
-                writer.newLine();
-            }
-            for(State state : states){
+    private static void writeToFile(String fileName) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
+            // Write table header
+            writer.write("s, ch, 1, 2");
+            writer.newLine();
+            writer.write("___________");
+            writer.newLine();
+
+            // Write FSM states
+            for (State state : states) {
                 writer.write(state.toString());
                 writer.newLine();
             }
             System.out.println("Successfully written to " + fileName);
-        } catch(IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
