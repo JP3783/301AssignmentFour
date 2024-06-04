@@ -72,6 +72,7 @@ public class REmake{
     }
 
     private static void buildFSM(String regexp){
+        //Declare variables
         Stack<Integer> startStates = new Stack<>();
         Stack<Integer> endStates = new Stack<>();
         int prevState = 1;
