@@ -41,7 +41,7 @@ public class REmake{
          */
         @Override
         public String toString(){
-            return stateNumber + "," + type + "," + nextState1 + "," + nextState2;
+            return stateNumber + ", " + type + ", " + nextState1 + ", " + nextState2;
         }
     }
 
@@ -53,7 +53,7 @@ public class REmake{
         }
 
         //Declare variables for inputFile and outputFile
-        String regexpInput = args[0];
+        //String regexpInput = args[0];
         String FSM = args[1];
         
         //Initialise the states list
@@ -84,7 +84,7 @@ public class REmake{
         patternRow.add("ch");
         patternRow.add("1");
         patternRow.add("2");
-        line.add("________");
+        line.add("___________");
         table.add(patternRow);
         table.add(line);
         //Return the output
@@ -102,7 +102,7 @@ public class REmake{
                 for (int i = 0; i < row.size(); i++) {
                     writer.write(row.get(i));
                     if (i < row.size() - 1) {
-                        writer.write(",");
+                        writer.write(", ");
                     }
                 }
                 writer.newLine();
