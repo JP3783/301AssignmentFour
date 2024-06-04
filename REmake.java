@@ -8,6 +8,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * This program takes a regular expression (regex) as input and outputs the corresponding FSM.
@@ -71,45 +72,64 @@ public class REmake{
     }
 
     private static void buildFSM(String regexp){
-        List<Integer> startStates = new ArrayList<>();
-        List<Integer> endStates = new ArrayList<>();
+        Stack<Integer> startStates = new Stack<>();
+        Stack<Integer> endStates = new Stack<>();
         int prevState = 1;
+        int startState;
+        char lastChar = 0;
 
         for(int i = 0; i < regexp.length(); i++){
             char c = regexp.charAt(i);
 
-            if (c == '*') {
-                states.get(prevState - 1).nextState1 = currentState;
-                states.add(new State(currentState, "BR", prevState, currentState + 1));
+            if(c == '\\'){
+                i++;
+                char nextChar = regexp.charAt(i);
+                states.add(new State(currentState, Character.toString(nextChar), currentState + 1, currentState + 1));
+                prevState = currentState;
+                currentState++;
+            } else if(c == '*'){
+                if(lastChar == ')'){
+                    startState = startStates.peek();
+                } else{
+                    startState = prevState - 1;
+                }
+                states.get(startState).nextState1 = currentState;
+                states.add(new State(currentState, "BR", startState, currentState + 1));
                 currentState++;
                 prevState = currentState;
-            } else if (c == '?') {
-                states.get(prevState - 1).nextState2 = currentState;
-                states.add(new State(currentState, "BR", prevState, currentState + 1));
+            } else if(c == '?') {
+                if(lastChar == ')') {
+                    startState = startStates.peek();
+                } else{
+                    startState = prevState - 1;
+                }
+                states.get(startState).nextState2 = currentState;
+                states.add(new State(currentState, "BR", startState, currentState + 1));
                 currentState++;
                 prevState = currentState;
-            } else if (c == '|') {
+            } else if(c == '|') {
                 startStates.add(currentState);
                 states.add(new State(currentState, "BR", prevState, -1));
                 currentState++;
                 prevState = currentState;
-            } else if (c == '(') {
+            } else if(c == '(') {
                 startStates.add(currentState);
-            } else if (c == ')') {
+            } else if(c == ')') {
                 endStates.add(prevState);
-                int startState = startStates.remove(startStates.size() - 1);
+                startState = startStates.pop();
                 states.add(new State(currentState, "BR", startState, prevState + 1));
                 currentState++;
                 prevState = currentState;
-            } else {
-                states.add(new State(currentState, Character.toString(c) , currentState + 1, currentState + 1));
+            } else{
+                states.add(new State(currentState, "\"" + Character.toString(c) + "\"", currentState + 1, currentState + 1));
                 prevState = currentState;
                 currentState++;
             }
+            lastChar = c;
         }
 
-        while (!endStates.isEmpty()) {
-            int endState = endStates.remove(endStates.size() - 1);
+        while (!endStates.isEmpty()){
+            int endState = endStates.pop();
             states.add(new State(currentState, "BR", endState, currentState + 1));
             currentState++;
         }
