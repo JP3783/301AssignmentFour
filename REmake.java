@@ -71,35 +71,47 @@ public class REmake{
     }
 
     private static void buildFSM(String regexp){
-        int startState;
+        List<Integer> startStates = new ArrayList<>();
+        List<Integer> endStates = new ArrayList<>();
         int prevState = 1;
 
         for(int i = 0; i < regexp.length(); i++){
             char c = regexp.charAt(i);
 
-            if(c == '*'){
+            if (c == '*') {
                 states.get(prevState - 1).nextState1 = currentState;
-                states.add(new State(currentState++, "BR", prevState, currentState + 1));
-                prevState = currentState++;
-            } else if(c == '?'){
+                states.add(new State(currentState, "BR", prevState, currentState + 1));
+                currentState++;
+                prevState = currentState;
+            } else if (c == '?') {
                 states.get(prevState - 1).nextState2 = currentState;
-                states.add(new State(currentState++, "BR", prevState, currentState + 1));
-                prevState = currentState++;
+                states.add(new State(currentState, "BR", prevState, currentState + 1));
+                currentState++;
+                prevState = currentState;
             } else if (c == '|') {
-                startState = states.size();
-                states.add(new State(currentState++, "BR", prevState, -1));
-                prevState = currentState++;
+                startStates.add(currentState);
+                states.add(new State(currentState, "BR", prevState, -1));
+                currentState++;
+                prevState = currentState;
             } else if (c == '(') {
-                startState = currentState;
+                startStates.add(currentState);
             } else if (c == ')') {
-                // Find the corresponding startState for '('
-                // This part is simplified for the sake of example
-                startState = prevState - 1;
-                states.get(startState).nextState2 = prevState;
+                endStates.add(prevState);
+                int startState = startStates.remove(startStates.size() - 1);
+                states.add(new State(currentState, "BR", startState, prevState + 1));
+                currentState++;
+                prevState = currentState;
             } else {
-                states.add(new State(currentState++, "\"" + c + "\"", currentState, currentState));
-                prevState = currentState++;
+                states.add(new State(currentState, Character.toString(c) , currentState + 1, currentState + 1));
+                prevState = currentState;
+                currentState++;
             }
+        }
+
+        while (!endStates.isEmpty()) {
+            int endState = endStates.remove(endStates.size() - 1);
+            states.add(new State(currentState, "BR", endState, currentState + 1));
+            currentState++;
         }
     }
 
