@@ -17,9 +17,6 @@ public class REmake{
     private static List<State> states;
     private static int currentState;
 
-
-
-
     /**
      * This is a class to initialise the variables for the state of the FSM
      */
@@ -63,59 +60,60 @@ public class REmake{
         states = new ArrayList<>();
         currentState = 1;
 
+        ArrayList<ArrayList<String>> table = new ArrayList<>();
+        createTable(table);
+
         //Initialise state that branches to the start of the actual FSM
         states.add(new State(0, "BR", 1, 1));
 
-        //Compile the regexp into FSM
-        compile(regexpInput);
-
         //Output the FSM
-        writeToFile(FSM);
+        writeToFile(table, FSM);
+    }
+
+    /**
+     * This creates the heading of the table, where you'll find "s,ch,1,2"
+     * @param table the structure for the FSM outputs
+     * @return the table with an informative first row
+     */
+    private static ArrayList<ArrayList<String>> createTable(ArrayList<ArrayList<String>> table){
+        //Declare variables
+        ArrayList<String> patternRow = new ArrayList<>();
+        ArrayList<String> line = new ArrayList<>();
+        //Populate table
+        patternRow.add("s");
+        patternRow.add("ch");
+        patternRow.add("1");
+        patternRow.add("2");
+        line.add("________");
+        table.add(patternRow);
+        table.add(line);
+        //Return the output
+        return table;
     }
 
     /**
      * This method writes the FSM to a file
+     * @param table the structure for the FSM output
      * @param fSM the FSM output from the regexp
-     * @throws IOException 
      */
-    private static void writeToFile(String fileName) throws IOException {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
+    private static void writeToFile(ArrayList<ArrayList<String>> table, String fileName) {
+        try(BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))){
+            for(ArrayList<String> row : table){
+                for (int i = 0; i < row.size(); i++) {
+                    writer.write(row.get(i));
+                    if (i < row.size() - 1) {
+                        writer.write(",");
+                    }
+                }
+                writer.newLine();
+            }
             for(State state : states){
                 writer.write(state.toString());
                 writer.newLine();
             }
+            System.out.println("Successfully written to " + fileName);
+        } catch(IOException e){
+            e.printStackTrace();
         }
-    }
-
-    public static void compile(String regexpString){
-        //This is where the regexp input is checked for illegal characters
-        if(regexpString.contains(".")){
-            //Wildcard that matches any literal
-        }
-
-        if(regexpString.contains("*")){
-            //Indicates closure (zero or more occurences) on the preceding regexp
-        }
-
-        if(regexpString.contains("?")){
-            //Indicates that the preceding regexp can occur zero or one time
-        }
-
-        if(regexpString.contains("|")){
-            //is an infix alternation operator such that if r and e are regexps, then r|e is a regexp that matches one of either r or e
-        }
-
-        //Didn't do:
-        //1. any symbol that does not have a special meaning (as given below) is a literal that matches itself
-        //3. adjacent regexps are concatenated to form a single regexp
-        //7. ( and ) may enclose a regexp to raise its precedence in the usual manner; such that if e is a regexp, then (e) is a regexp and is equivalent to e. e cannot be empty.
-        //8. \ is an escape character that matches nothing but indicates the symbol immediately following the backslash loses any special meaning and is to be interpretted as a literal symbol
-        //9. operator precedence is as follows (from high to low):
-        //      escaped characters (i.e. symbols preceded by \)
-        //      parentheses (i.e. the most deeply nested regexps have the highest precedence)
-        //      repetition/option operators (i.e. * and ?)
-        //      concatenation
-        //      alternation (i.e. | )
-        //10. not required for this assignment, but a challenge to those who are interested, is how you might incorporate ! as a "do not match" operator, such that !e matches only a pattern that does not match the expression e.
     }
 }
