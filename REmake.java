@@ -146,7 +146,7 @@ public class REmake{
             // Write table header
             writer.write("s,ch,1,2");
             writer.newLine();
-            writer.write("___________");
+            writer.write("_________");
             writer.newLine();
 
             // Write FSM states
