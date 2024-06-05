@@ -15,6 +15,7 @@ import java.util.Stack;
  */
 public class REmake{
 
+    //Declare some global variables
     private static List<State> states;
     private static int currentState;
 
@@ -22,6 +23,8 @@ public class REmake{
      * This is a class to initialise the variables for the state of the FSM
      */
     static class State{
+
+        //Declare variables
         int stateNumber;
         String type;
         int nextState1;
@@ -46,7 +49,13 @@ public class REmake{
         }
     }
 
+    /**
+     * The entry point of the program
+     * @param args the command-line arguments
+     * @throws IOException if an I/O error occurs when writing to the output file
+     */
     public static void main(String[] args) throws IOException {
+
         //Make sure the program is run correctly in the terminal
         if(args.length != 2){
             System.err.println("Usage: java REmake <regexp> <output_file_path>");
@@ -71,68 +80,93 @@ public class REmake{
         writeToFile(FSM);
     }
 
-    private static void buildFSM(String regexp){
-        //Declare variables
+    /**
+     * Builds the FSM from the regular expression
+     * @param regexp the input regexp from the command-line that will be processed
+     */
+    private static void buildFSM(String regexp) {
+
+        //Using stacks to keep trackof startStates, endStates, and alternationStates, it's easier this way
         Stack<Integer> startStates = new Stack<>();
         Stack<Integer> endStates = new Stack<>();
+        Stack<Integer> alterStates = new Stack<>();
+
+        //Tracks the previous state
         int prevState = 1;
-        int startState;
+
+        //Tracks the last character processed
         char lastChar = 0;
 
-        for(int i = 0; i < regexp.length(); i++){
+        //Loop through each character in ther regexp
+        for (int i = 0; i < regexp.length(); i++) {
             char c = regexp.charAt(i);
 
-            if(c == '\\'){
+            if (c == '\\') {    //If an escape character is found
+                //Increment i to point to the next character
                 i++;
                 char nextChar = regexp.charAt(i);
-                states.add(new State(currentState, Character.toString(nextChar), currentState + 1, currentState + 1));
+                //Add a state for the escaped character
+                states.add(new State(currentState, "\"" + Character.toString(nextChar) + "\"", currentState + 1, currentState + 1));
                 prevState = currentState;
                 currentState++;
-            } else if(c == '*'){
-                if(lastChar == ')'){
-                    startState = startStates.peek();
-                } else{
-                    startState = prevState - 1;
-                }
+            } else if (c == '*') {      //If a "zero or more occurrences" symbol is found
+                //Determine its start state
+                int startState = (lastChar == ')' ? startStates.peek() : prevState - 1);
                 states.get(startState).nextState1 = currentState;
+                //Add a branch state to create the loop
                 states.add(new State(currentState, "BR", startState, currentState + 1));
                 currentState++;
                 prevState = currentState;
-            } else if(c == '?') {
-                if(lastChar == ')') {
-                    startState = startStates.peek();
-                } else{
-                    startState = prevState - 1;
-                }
+            } else if (c == '?') {      //If a "zero or one occurrence" symbol is found
+                //Determine its startState
+                int startState = (lastChar == ')' ? startStates.peek() : prevState - 1);
                 states.get(startState).nextState2 = currentState;
+                //Add a branch state to handle the optional character
                 states.add(new State(currentState, "BR", startState, currentState + 1));
                 currentState++;
                 prevState = currentState;
-            } else if(c == '|') {
-                startStates.add(currentState);
+            } else if (c == '|') {      //If an "alternation" symbol is found
+                //Push onto the alterStates stack
+                alterStates.push(prevState);
+                //Add a branch state to handle the alternation
                 states.add(new State(currentState, "BR", prevState, -1));
                 currentState++;
                 prevState = currentState;
-            } else if(c == '(') {
-                startStates.add(currentState);
-            } else if(c == ')') {
-                endStates.add(prevState);
-                startState = startStates.pop();
+            } else if (c == '(') {      //If an opened bracket is found. i.e. start of a group
+                //Push the current state onto the startStates stack
+                startStates.push(currentState);
+            } else if (c == ')') {      //If a closed bracket is found. i.e. end of a group
+                //Push the previous state onto the endStates stack
+                endStates.push(prevState);
+                //Get the startState from the startStates stack
+                int startState = startStates.pop();
+                //Add a branch state to link the group
                 states.add(new State(currentState, "BR", startState, prevState + 1));
                 currentState++;
                 prevState = currentState;
-            } else{
-                states.add(new State(currentState, "\"" + Character.toString(c) + "\"", currentState + 1, currentState + 1));
+            } else {    //If a regular character or any other symbol is found
+                //Treat as a literal
+                //Add a state for the character
+                states.add(new State(currentState, c == '.' ? "." : "\"" + Character.toString(c) + "\"", currentState + 1, currentState + 1));
                 prevState = currentState;
                 currentState++;
             }
+
+            //Update the last character processed
             lastChar = c;
         }
 
-        while (!endStates.isEmpty()){
+        //Handle any remaining endStates
+        while (!endStates.isEmpty()) {
             int endState = endStates.pop();
             states.add(new State(currentState, "BR", endState, currentState + 1));
             currentState++;
+        }
+
+        //Handle any remaining alternationStates
+        while (!alterStates.isEmpty()) {
+            int alterState = alterStates.pop();
+            states.get(alterState).nextState2 = currentState;
         }
     }
 
@@ -143,6 +177,7 @@ public class REmake{
      */
     private static void writeToFile(String fileName) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
+
             // Write table header
             writer.write("s,ch,1,2");
             writer.newLine();
@@ -154,7 +189,10 @@ public class REmake{
                 writer.write(state.toString());
                 writer.newLine();
             }
+
+            //Print a message saying the file has been written
             System.out.println("Successfully written to " + fileName);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
