@@ -42,7 +42,7 @@ public class REmake{
          */
         @Override
         public String toString(){
-            return stateNumber + ", " + type + ", " + nextState1 + ", " + nextState2;
+            return stateNumber + "," + type + "," + nextState1 + "," + nextState2;
         }
     }
 
@@ -144,7 +144,7 @@ public class REmake{
     private static void writeToFile(String fileName) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
             // Write table header
-            writer.write("s, ch, 1, 2");
+            writer.write("s,ch,1,2");
             writer.newLine();
             writer.write("___________");
             writer.newLine();
