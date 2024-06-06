@@ -168,6 +168,9 @@ public class REmake{
             int alterState = alterStates.pop();
             states.get(alterState).nextState2 = currentState;
         }
+
+        // Add the final state to the output
+        states.add(new State(currentState, "BR", 0, 0));
     }
 
     /**
