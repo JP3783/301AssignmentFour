@@ -11,8 +11,13 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Stack;
+import java.util.Queue;
+import java.util.LinkedList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class REfind {
+
     public static void main(String[] args) {
         // Check if the correct number of arguments is provided
         if (args.length != 2) {
@@ -57,7 +62,7 @@ public class REfind {
                 // Add logic here 
                 // Each found pattern should be outputted as a line
                 if (matches(line, fsm)) {
-                    //System.out.println(line);
+                    System.out.println(line);
                 }
             }
         } catch (IOException e) {
@@ -68,22 +73,101 @@ public class REfind {
 
     // Checks if a substring of the given line matches the FSM
     static boolean matches(String line, List<State> fsm) {
-        // Outer loop to go through each character 
-        for (int start = 0; start < line.length(); start++) {
-            System.out.println(start + " " + line.charAt(start));
+       
+        // Advance mark 
+        // If mark cannot advance, total fail 
+
+        // Reset point
+        // Reset deque
+        Stack<Integer> currentStates = new Stack<>();
+        Queue<Integer> nextStates = new LinkedList<>();
+        List<Integer> visited = new LinkedList<>();
+
+        // Set current state to 0 to get started 
+        currentStates.push(0); 
+       
+       //While stack not empty 
+       while (!currentStates.isEmpty()) {
+        // Remove the state number we are looking at 
+        // Store it in the variable currentStateNumber
+        int currentStateIndex = currentStates.pop(); // Pop 
+        State currentState = fsm.get(currentStateIndex);
+       
+        if(currentState.nextState1 == 0){
+            break;
         }
-        // Initialization :
-        // Dequeue initialized (new deque is created for each starting position in the input string)
-        Deque<Integer> deque = new ArrayDeque<>();
-        // The starting state is added to the front of the deque
-        deque.addFirst(0);
+
+        // If its a branch state 
+        if(currentState.type.equals("BR")){
+            if(currentState.nextState1 == currentState.nextState2){
+                if(!(visited.contains(currentState.nextState1))){
+                    //System.out.println("Adding: " + currentState.nextState1);
+                    nextStates.offer(currentState.nextState1);
+                    visited.add(currentState.nextState1);
+                }
+            }
+            else{ 
+                if(!((visited.contains(currentState.nextState1)) | visited.contains(currentState.nextState2))){
+                    //System.out.println("Adding: " + currentState.nextState1 + " " + currentState.nextState2);
+                    nextStates.offer(currentState.nextState1);
+                    nextStates.offer(currentState.nextState2);
+                    visited.add(currentState.nextState1);
+                    visited.add(currentState.nextState2);
+                }
+            }
+        }
+        else{
+            if(!(visited.contains(currentState.nextState1))){
+                //System.out.println("Adding: " + currentState.nextState1);
+                nextStates.offer(currentState.nextState1);
+                visited.add(currentState.nextState1);
+            }
+        }
+
+        // Print DeQueue
+        System.out.println(" ");
+        System.out.println("Current Stack: ");
+        System.out.println(currentState.stateNumber);
+        System.out.println("SCAN");
+        for (Integer integer : nextStates) {
+            System.out.println(integer);
+        }
+        System.out.println(" ____ ");
         
-        // Current state is obtained by removing the first element from the deque
-        
-        
+
+        if (currentStates.isEmpty() && !nextStates.isEmpty()) {
+            //System.out.println("SWAP");
+            currentStates.push(nextStates.poll());
+        }
+    }
+       
+        //While stack not empty 
+        // Pop 
+        // Set state to visited <<
+        // If its a branch state 
+            //- push next1/2 (if not visited)
+        // If it is a match (curr state char = text char)
+            // move pointer and advance to next state
+            // add nextstate (so if the char is a match then add the next states to the nextstate stack)
+
+        // While more curr sattes 
+        // Pop - mark visited 
+        // // If its a branch state 
+            //- push next1/2 (if not visited)
 
         return false;
     }
+
+    // public static boolean isVisited(List<Integer> visited, int states) {
+    //     boolean isvisited = false;
+    //     for (Integer state : nextState1) {
+    //         if (visited.contains(state)) {
+    //             System.out.println(state + " " + nextState1);
+    //             isvisited = true;
+    //         }
+    //     }
+    //     return isvisited;
+    // }
 
 
 
