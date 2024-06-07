@@ -1,4 +1,4 @@
 # 301AssignmentFour
 
 # REFind
-java REfind output.txt test.txt
+cat make.txt | java REfind textfile.txt > found.txt

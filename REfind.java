@@ -6,7 +6,8 @@
  import java.io.BufferedReader;
  import java.io.FileReader;
  import java.io.IOException;
- import java.util.ArrayList;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
  import java.util.List;
  import java.util.NoSuchElementException;
  import java.util.LinkedList;
@@ -16,50 +17,48 @@
  
      public static void main(String[] args) {
          // Check if the correct number of arguments is provided
-         if (args.length != 2) {
-             System.err.println("Usage: java REfind <REmake Output> <text file>");
-             System.exit(1);
-         }
+         if (args.length != 1) {
+            // cat make.txt | java REfind textfile.txt > found.txt
+            System.err.println("Usage: java REfind <text file>");
+            System.exit(1);
+        }
          
-         // Output of the first program
-         String fsmDescriptionFile = args[0];
-         List<State> fsm = new ArrayList<>();
+        // Text file to search
+        String textFile = args[0];
+        // Output of the first program
+        List<State> fsm = new ArrayList<>();
  
-         // Read FSM description from the file
-         try (BufferedReader reader = new BufferedReader(new FileReader(fsmDescriptionFile))) {
-             String line;
-             while ((line = reader.readLine()) != null) {
-                 if (line.startsWith("s") || line.startsWith("_")) {
-                     continue;  // Skip header lines
-                 }
-                 String[] parts = line.split(",");
-                 int stateNumber = Integer.parseInt(parts[0]);
-                 String type = parts[1];
-                 // Remove the quotes
-                 type = type.replace("\"", "");
-                 int nextState1 = Integer.parseInt(parts[2]);
-                 int nextState2 = Integer.parseInt(parts[3]);
-                 fsm.add(new State(stateNumber, type, nextState1, nextState2));
-                 //System.out.println(stateNumber + " " + type + " " + nextState1 + " " + nextState2);
-             }
-         } catch (IOException e) {
-             System.err.println("Error reading FSM description file: " + e.getMessage());
-             System.exit(1);
-         }
+            // Read FSM from standard input
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("s") || line.startsWith("_")) {
+                    continue;  // Skip header lines
+                }
+                String[] parts = line.split(",");
+                int stateNumber = Integer.parseInt(parts[0]);
+                String type = parts[1].replace("\"", "");
+                int nextState1 = Integer.parseInt(parts[2]);
+                int nextState2 = Integer.parseInt(parts[3]);
+                fsm.add(new State(stateNumber, type, nextState1, nextState2));
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading FSM: " + e.getMessage());
+            System.exit(1);
+        }
  
-         // Read text file from command-line argument
-         String textFile = args[1];
+        // Check for matches in the text file
          try (BufferedReader reader = new BufferedReader(new FileReader(textFile))) {
              String line;
+             boolean matchFound = false;
              while ((line = reader.readLine()) != null) {
-                 // System.out.println("Current string to process:");
-                 // System.out.println(line);
-                 // System.out.println("Matches Found: ");
-                 // Add logic here 
-                 // Each found pattern should be outputted as a line
                  if (matches(line, fsm)) {
-                     // System.out.println(line);
+                     System.out.println(line);
+                     matchFound = true;
                  }
+             }
+             if(!matchFound){
+                System.out.println("No matches found");
              }
          } catch (IOException e) {
              System.err.println("Error reading text file: " + e.getMessage());
@@ -67,51 +66,93 @@
          }
      }
  
-     // Checks if a substring of the given line matches the FSM
-     static boolean matches(String line, List<State> fsm) {
-         Deque deque = new Deque();
-         List<Integer> visited = new LinkedList<>();
- 
-         deque.addFirst(0);
- 
-         //While stack not empty 
-         while (!deque.isEmpty()){
-             int currentIndex = deque.removeFirst(); 
-             State currentState = fsm.get(currentIndex);
- 
-             System.out.println(visited.toString() + " " + currentState.stateNumber);
-            //  if(visited.contains(currentState.stateNumber)){
-            //      System.out.println("Visited");
-            //      continue;
-            //  }
- 
-             if (currentState.type.equals("BR")){
-                 if(currentState.nextState1 == currentState.nextState2){
-                    if(!(visited.contains(currentState.nextState1))){
-                     deque.addFirst(currentState.nextState1);
-                    }
-                 }else{
-                    if(!(visited.contains(currentState.nextState1))){
-                        deque.addFirst(currentState.nextState1);
-                    }if(!(visited.contains(currentState.nextState2))){
-                        deque.addFirst(currentState.nextState2);
-                    }
-                 }  
-             }else{
-                if(!(visited.contains(currentState.stateNumber))){
-                    deque.addLast(currentState.stateNumber);
-                }
-             }
- 
+    /**
+      * Checks if a substring of the given line matches the FSM
+      */
+        static boolean matches(String line, List<State> fsm) {
+        // Loop through each character position in the input string
+        for (int mark = 0; mark < line.length(); mark++) {
+            // Start matching from the current mark position
+            int point = mark; 
+            Deque deque = new Deque();
+            List<Integer> visited = new LinkedList<>();
+            
+            deque.addFirst(0); // Start from the initial state
+            deque.addFirst(-1); // Add a scan marker
 
-             if (deque.isScan(currentIndex)){
-                System.out.println("IS");
-             }
- 
-             visited.add(currentIndex);
-         }
-         return false;
-     }
+            boolean mismatch = false; // Track mismatches
+
+            // Process the FSM transitions
+            while (!deque.isEmpty()) {
+                // Pop the next element
+                int currentIndex = deque.removeFirst();
+
+                // Handle scan marker
+                if (deque.isScan(currentIndex)) {
+                    if (!deque.isEmpty()) {
+                        visited.clear();
+                        deque.addLast(-1);
+                        // Advance
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+
+                // Get the current state from the current index
+                State currentState = fsm.get(currentIndex);
+                visited.add(currentIndex);
+
+                // Check if the FSM has reached a final state
+                if (currentState.nextState1 == 0) {
+                    // A match is found
+                    // return true - end program early
+                    return true; 
+                }
+
+                // Handle branch states
+                if (currentState.type.equals("BR")) {
+                    if (currentState.nextState1 == currentState.nextState2) {
+                        deque.addFirst(currentState.nextState1);
+                    } else {
+                        deque.addFirst(currentState.nextState2);
+                        deque.addFirst(currentState.nextState1);
+                    }
+                } else {
+                    // Handle character match
+                    if (point < line.length() && currentState.type.equals(String.valueOf(line.charAt(point)))) {    
+                        if (currentState.nextState1 == currentState.nextState2) {
+                            deque.addLast(currentState.nextState1);
+                        } else {
+                            if (!visited.contains(currentState.nextState1)) {
+                                deque.addLast(currentState.nextState1);
+                            }
+                            if (!visited.contains(currentState.nextState2)) {
+                                deque.addLast(currentState.nextState2);
+                            }
+                        }
+                        if (point < line.length() - 1) {
+                            point++;
+                        } else {
+                            // End of line without full match
+                            mismatch = true;
+                            break;
+                        }
+                    } else {
+                        mismatch = true;
+                        break;
+                    }
+                }
+            }
+
+            // If a mismatch occurs, continue to the next mark
+            if (mismatch) {
+                continue;
+            }
+        }
+        return false; // No match found
+    }
+    
  
      /**
       * This is a class to initialise the variables for the state of the FSM
@@ -163,13 +204,13 @@
  class Deque{
      Node head;
      Node tail;
-     // SCAN - sepperate the two stacks
      Node scan;
  
      // Constructor
      public Deque(){
-         head = null;
-         tail = null;
+        head = null;
+        tail = null;
+        addFirst(-1);
      }
  
      /*
@@ -236,4 +277,16 @@
          }
          return false;
      }
+
+     /*
+     * A method to print all the items in the deque
+     */
+    public void printDeque(){
+        System.out.println("Deque: ");
+        Node current = head;
+        while(current != null){
+            System.out.println(current.value);
+            current = current.next;
+        }
+    }
  }
