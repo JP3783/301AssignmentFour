@@ -76,36 +76,39 @@
  
          //While stack not empty 
          while (!deque.isEmpty()){
-             int currentStateIndex = deque.removeFirst(); 
-             State currentState = fsm.get(currentStateIndex);
+             int currentIndex = deque.removeFirst(); 
+             State currentState = fsm.get(currentIndex);
  
              System.out.println(visited.toString() + " " + currentState.stateNumber);
-             if(visited.contains(currentState.stateNumber)){
-                 System.out.println("Visited");
-                 continue;
-             }
+            //  if(visited.contains(currentState.stateNumber)){
+            //      System.out.println("Visited");
+            //      continue;
+            //  }
  
              if (currentState.type.equals("BR")){
                  if(currentState.nextState1 == currentState.nextState2){
+                    if(!(visited.contains(currentState.nextState1))){
                      deque.addFirst(currentState.nextState1);
+                    }
                  }else{
-                     deque.addFirst(currentState.nextState1);
-                     deque.addFirst(currentState.nextState2);
+                    if(!(visited.contains(currentState.nextState1))){
+                        deque.addFirst(currentState.nextState1);
+                    }if(!(visited.contains(currentState.nextState2))){
+                        deque.addFirst(currentState.nextState2);
+                    }
                  }  
              }else{
- 
+                if(!(visited.contains(currentState.stateNumber))){
+                    deque.addLast(currentState.stateNumber);
+                }
              }
  
+
+             if (deque.isScan(currentIndex)){
+                System.out.println("IS");
+             }
  
-             
-             System.out.println("SCAN");
-             // for (Integer integer : nextStates) {
-             //     System.out.println(integer);
-             // }
-             // System.out.println("____________ ");
- 
- 
-             visited.add(currentStateIndex);
+             visited.add(currentIndex);
          }
          return false;
      }
