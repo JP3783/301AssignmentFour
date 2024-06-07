@@ -6,6 +6,7 @@
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
@@ -57,14 +58,14 @@ public class REmake{
     public static void main(String[] args) throws IOException {
 
         //Make sure the program is run correctly in the terminal
-        if(args.length != 2){
-            System.err.println("Usage: java REmake <regexp> <output_file_path>");
+        if(args.length != 1 && args.length != 2){
+            System.err.println("Usage: java REmake <regexp> [output_file_path]");
             System.exit(0);
         }
 
         //Declare variables for inputFile and outputFile
         String regexpInput = args[0];
-        String FSM = args[1];
+        String FSM = (args.length == 2) ? args[1] : null;
         
         //Initialise the states list
         states = new ArrayList<>();
@@ -77,7 +78,34 @@ public class REmake{
         buildFSM(regexpInput);
 
         //Output the FSM
-        writeToFile(FSM);
+        if(FSM == null){
+            writeToSout();
+        } else{
+            writeToFile(FSM);
+        }
+    }
+
+    /**
+     * This method writes the output to the standard output.
+     */
+    private static void writeToSout() {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(System.out))) {
+
+            // Write table header
+            writer.write("s,ch,1,2");
+            writer.newLine();
+            writer.write("_________");
+            writer.newLine();
+
+            // Write FSM states
+            for (State state : states) {
+                writer.write(state.toString());
+                writer.newLine();
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
