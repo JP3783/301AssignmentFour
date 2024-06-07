@@ -109,41 +109,50 @@ public class REmake{
                 states.add(new State(currentState, "\"" + Character.toString(nextChar) + "\"", currentState + 1, currentState + 1));
                 prevState = currentState;
                 currentState++;
+                
             } else if (c == '*') {      //If a "zero or more occurrences" symbol is found
                 //Determine its start state
-                int startState = (lastChar == ')' ? startStates.peek() : prevState - 1);
+                int startState = (lastChar == ')' && !startStates.isEmpty()) ? startStates.peek() : prevState - 1;
                 states.get(startState).nextState1 = currentState;
                 //Add a branch state to create the loop
                 states.add(new State(currentState, "BR", startState, currentState + 1));
                 currentState++;
                 prevState = currentState;
+
             } else if (c == '?') {      //If a "zero or one occurrence" symbol is found
                 //Determine its startState
-                int startState = (lastChar == ')' ? startStates.peek() : prevState - 1);
+                int startState = (lastChar == ')' && !startStates.isEmpty()) ? startStates.peek() : prevState - 1;
                 states.get(startState).nextState2 = currentState;
                 //Add a branch state to handle the optional character
                 states.add(new State(currentState, "BR", startState, currentState + 1));
                 currentState++;
                 prevState = currentState;
+
             } else if (c == '|') {      //If an "alternation" symbol is found
                 //Push onto the alterStates stack
                 alterStates.push(prevState);
-                //Add a branch state to handle the alternation
+                //Add a branch state to handle the alternation. note: -1 marks an incomplete alternation (will be replced with the correct state)
                 states.add(new State(currentState, "BR", prevState, -1));
                 currentState++;
                 prevState = currentState;
+
             } else if (c == '(') {      //If an opened bracket is found. i.e. start of a group
                 //Push the current state onto the startStates stack
                 startStates.push(currentState);
+
             } else if (c == ')') {      //If a closed bracket is found. i.e. end of a group
                 //Push the previous state onto the endStates stack
                 endStates.push(prevState);
-                //Get the startState from the startStates stack
-                int startState = startStates.pop();
-                //Add a branch state to link the group
-                states.add(new State(currentState, "BR", startState, prevState + 1));
-                currentState++;
-                prevState = currentState;
+                //Check if startStates if empty
+                if(!startStates.isEmpty()){
+                    //Get the startState from the startStates stack
+                    int startState = startStates.pop();
+                    //Add a branch state to link the group
+                    states.add(new State(currentState, "BR", startState, prevState + 1));
+                    currentState++;
+                    prevState = currentState;
+                }
+
             } else {    //If a regular character or any other symbol is found
                 //Treat as a literal
                 //Add a state for the character
